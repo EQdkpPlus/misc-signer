@@ -19,25 +19,65 @@
 *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-$privateKey = "file://S:\EQdkp\Dev_GodMod_2014.pem";
-
+$privateKeyFolder = "S:\EQdkp\\";
+$privateKeyEnding = "pem";
 
 //Do not change anything below this line
 //========================================
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
+//Global Vars
 $signature = "";
 $hash = "";
+$privateKey = "";
+$arrKeys = array();
+$keyDD = "";
 
 function bootstrap(){
-	global $privateKey;
+	global $arrKeys, $privateKey, $keyDD;
 	
-	if (isset($_POST['prkey']) && $_POST['prkey'] != $privateKey){
-		$privateKey = $_POST['prkey'];
-	}
+	$arrKeys = scanKeyDirectory();
+	persistendKey();
+	$keyDD = createKeyDropdown($arrKeys, $privateKey);
 	
 	handle_actions();
+}
+
+function createKeyDropdown($arrKeys, $strValue){
+	$out = '<select name="prkey">';
+	foreach($arrKeys as $key){
+		$selected = ($key === $strValue) ? ' selected="selected" ' : "";
+		$out .='<option value="'.$key.'"'.$selected.'>'.$key.'</option>';
+	}
+	$out .= '</select>';
+	return $out;
+}
+
+function persistendKey(){
+	global $privateKey;
+	
+	$cookieKey = isset($_COOKIE['prkey']) ? $_COOKIE['prkey'] : '';
+	if (!isset($_POST['prkey'])){
+		$privateKey = $cookieKey;
+	} else {
+		$privateKey = $_POST['prkey'];
+		setcookie('prkey', $privateKey);
+	}
+}
+
+function scanKeyDirectory(){
+	global $privateKeyFolder, $privateKeyEnding;
+
+	$arrOut = array();
+	$arrData = scandir($privateKeyFolder);
+	foreach($arrData as $key => $elem){
+		if ($key == "." || $key == "..") continue;
+		$strExtension = pathinfo($elem, PATHINFO_EXTENSION);
+		if ($strExtension === $privateKeyEnding){
+			$arrOut[$elem] = $elem;
+		}
+	}
+	return $arrOut;
 }
 
 function handle_actions(){
@@ -47,7 +87,7 @@ function handle_actions(){
 }
 
 function signhash(){
-	global $signature, $privateKey, $hash;
+	global $signature, $privateKey, $hash, $privateKeyFolder;
 	
 	$strHash = $_POST['hash'];
 	if ($strHash == ""){
@@ -57,7 +97,9 @@ function signhash(){
 	$hash = $strHash;
 	
 	// fetch private key from file and ready it
-	$pkeyid = openssl_pkey_get_private($privateKey);
+	
+	$strKey = "file://".$privateKeyFolder.$privateKey;
+	$pkeyid = openssl_pkey_get_private($strKey);
 	
 	// compute signature
 	openssl_sign($strHash, $signature, $pkeyid, "sha1WithRSAEncryption");
@@ -471,7 +513,7 @@ fieldset.settings dt span {
 							<dt>
 								<label>Private Key</label><br /><span>The private key file you had received by the EQdkp Plus Team</span>
 							</dt>
-							<dd><input type="text" name="prkey" style="width: 94%" value="<?php echo $privateKey; ?>"></dd>
+							<dd><?php echo $keyDD; ?></dd>
 						</dl>
 						<dl>
 							<dt>
