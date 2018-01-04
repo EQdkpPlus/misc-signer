@@ -4,8 +4,12 @@ misc-signer
 This tools helps you signing the EQdkp Plus Packages.
 
 ## HTML variant
-The HTML file is for running in your Browser. The keys and data will not leave your PC.
+The HTML files are for running in your Browser. The keys and data will not leave your PC.
 Just open the HTML-File in your local Browser.
+
+### Installation ###
+Download this repository and save it to a folder on your local PC. Open then the file you want in your local browser.
+Please keep in mind that you need the included JavaScript files in the folder, therefore please download not just the HTML-files, but the whole html folder.
 
 ### Files
 * signer.html - Sign a specific hash, that you have copied from the repository
