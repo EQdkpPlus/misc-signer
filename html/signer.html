@@ -381,8 +381,15 @@ fieldset.settings dt span {
 function doSign() {
   var rsa = new RSAKey();
   rsa.readPrivateKeyFromPEMString(document.getElementById('prikey').value);
-  var hashAlg = 'sha1';
-  var hSig = rsa.sign(document.getElementById('hash').value, hashAlg);
+  
+  var shaHash = document.getElementById('hash').value;
+  if(shaHash.length > 60){
+	var hashAlg = 'sha256';
+  } else {
+	var hashAlg = 'sha1';
+  }
+ 
+  var hSig = rsa.sign(shaHash, hashAlg);
   var bSig = Hex2Bin(hSig);
   var b64Sig = btoa(bSig);
   document.getElementById('output').value = b64Sig;
@@ -556,7 +563,7 @@ var Base64 = {
 						</dl>
 						<dl>
 							<dt>
-								<label>SHA1-Hash</label><br /><span>The SHA1-Hash displayed by the Repository</span>
+								<label>SHA-Hash</label><br /><span>The SHA1 or SHA256 Hash displayed by the Repository</span>
 							</dt>
 							<dd><input type="text" name="hash" id="hash" style="width: 94%" value=""></dd>
 						</dl>
@@ -576,7 +583,7 @@ var Base64 = {
 			</div>
 		</div>
 		<div id="footer">
-			EQDKP Plus Package Signer © 2014 - 2018 by GodMod
+			EQDKP Plus Package Signer © 2014 - 2020 by GodMod
 		</div>
 		</form>
 

@@ -47,7 +47,8 @@ function bootstrap(){
 
 function getUnsignedPackages(){
 	global $exchangeKey;
-	$streamList = file_get_contents("https://eqdkp-plus.eu/repository/exchange.php?out=hashlist&key=".$exchangeKey);
+	$streamList = file_get_contents("https://download.eqdkp-plus.eu/exchange.php?out=hashlist&key=".$exchangeKey);
+
 	$arrList = json_decode($streamList, true);
 	return $arrList;
 }
@@ -93,6 +94,15 @@ function handle_actions(){
 	if (isset($_POST['sign'])){
 		signhash();
 	}
+	if (isset($_POST['signqueries'])){
+		signhash();
+		build_queries();
+	}
+	
+	if (isset($_POST['signjson'])){
+		signhash();
+		build_json();
+	}
 }
 
 function signhash(){
@@ -100,7 +110,7 @@ function signhash(){
 	
 	foreach($arrPackages as $key => $val){
 		$strHash = $val['hash'];
-		
+		$strHash256 = $val['hash_sha256'];
 		// fetch private key from file and ready it
 		
 		$strKey = "file://".$privateKeyFolder.$privateKey;
@@ -109,12 +119,38 @@ function signhash(){
 		// compute signature
 		openssl_sign($strHash, $signature, $pkeyid, "sha1WithRSAEncryption");
 		
+		if(strlen($strHash256)) openssl_sign($strHash256, $signature256, $pkeyid, "sha256WithRSAEncryption");
+		
 		// free the key from memory
 		openssl_free_key($pkeyid);
 		$signature = base64_encode($signature);
+		$signature256 = base64_encode($signature256);
 		
 		$arrPackages[$key]['sig'] = $signature;
+		if(strlen($strHash256)) $arrPackages[$key]['sig_sha256'] = $signature256;
+		
 	}
+}
+
+function build_queries(){
+	global $signature, $privateKey, $hash, $privateKeyFolder, $arrPackages;
+	
+	foreach($arrPackages as $key => $val){
+		if ($val['category'] != 8 || (int)$arrPackages[$key]['id'] < 400) continue;
+		echo "UPDATE eqdkp23_repo_packages SET signature = '".$arrPackages[$key]['sig']."',status=2 WHERE id=".$arrPackages[$key]['id']."; \n";
+	}
+}
+
+function build_json(){
+	global $signature, $privateKey, $hash, $privateKeyFolder, $arrPackages;
+	$arrOut = array();
+	foreach($arrPackages as $key => $val){
+		if ($val['category'] != 8) continue;
+		$arrOut[(int)$arrPackages[$key]['id']] = $arrPackages[$key]['sig'];
+	}
+	
+	echo json_encode($arrOut);
+	die();
 }
 
 //Init
@@ -528,17 +564,22 @@ fieldset.settings dt span {
 						<tr>
 							<th>ID</th>
 							<th>Package</th>
-							<th>Signature</th>
+							<th>Signature SHA1</th>
+							<th>Signature SHA256</th>
 						</tr>
 						<?php
 							foreach($arrPackages as $val){
 								echo "<tr><td>".$val['id']."</td><td>".(($val['category'] == 8) ? '<span style="color:red;">'.$val['name'].'</span>' : $val['name'])."</td><td><input type=\"text\" onclick=\"this.select()\" readonly=\"readonly\" value=\"".((isset($val['sig'])) ? $val['sig'] : '')."\" style=\"width: 100%\"/>
+		
+		</td><td><input type=\"text\" onclick=\"this.select()\" readonly=\"readonly\" value=\"".((isset($val['sig_sha256'])) ? $val['sig_sha256'] : '')."\" style=\"width: 100%\"/>
 		
 		</td></tr>";
 							}
 						?>
 					</table>
 					<div class="buttonbar">
+						<button type="submit" name="signqueries">Sign & Queries</button>
+						<button type="submit" name="signjson">Sign & JSON</button>
 						<button type="submit" name="sign">Sign</button>
 					</div>
 					</form>
@@ -546,7 +587,7 @@ fieldset.settings dt span {
 			</div>
 		</div>
 		<div id="footer">
-			EQDKP Plus Package Signer © 2014 - <?php echo date('Y', time()); ?> by GodMod
+			EQDKP Plus Package Signer © 2020 - <?php echo date('Y', time()); ?> by GodMod
 		</div>
 		</form>
 

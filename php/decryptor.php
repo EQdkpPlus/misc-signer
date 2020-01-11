@@ -21,7 +21,6 @@
 
 $privateKeyFolder = "S:\\EQdkp\\";
 $privateKeyEnding = "pem";
-$exchangeKey = "1b4c7e97e9a9159f954a3e20a51b056d";
 
 //Do not change anything below this line
 //========================================
@@ -525,7 +524,7 @@ fieldset.settings dt span {
 			</div>
 		</div>
 		<div id="footer">
-			EQDKP Plus Package Signer © 2014 - <?php echo date('Y', time()); ?> by GodMod
+			EQDKP Plus Package Signer © 2020 - <?php echo date('Y', time()); ?> by GodMod
 		</div>
 		</form>
 

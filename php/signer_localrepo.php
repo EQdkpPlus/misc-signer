@@ -35,6 +35,8 @@ class repo_signer_all extends gen_class {
 		$objPackages = $this->db->query("SELECT * FROM __repo_packages WHERE category");
 		if ($objPackages){
 			while($row = $objPackages->fetchAssoc()){
+				$strHash = $strHash256 = $signature = $signature256 = "";
+				
 				if (intval($row['category']) == 8){
 					$privateKey = $strCoreKey;
 				} else {
@@ -48,14 +50,21 @@ class repo_signer_all extends gen_class {
 				$strKey = "file://".$privateKey;
 				$pkeyid = openssl_pkey_get_private($strKey);
 				
+				$strHash256 = $row['filehash_sha256'];
+				
 				// compute signature
 				openssl_sign($strHash, $signature, $pkeyid, "sha1WithRSAEncryption");
+				
+				if(strlen($strHash256)){
+					openssl_sign($strHash256, $signature256, $pkeyid, "sha256WithRSAEncryption");
+				}
 				
 				// free the key from memory
 				openssl_free_key($pkeyid);
 				$signature = base64_encode($signature);
+				$signature256 = base64_encode($signature256);
 				
-				echo "UPDATE eqdkp20_repo_packages SET signature = '".$signature."' WHERE id=".$row['id']."; ";
+				echo "UPDATE eqdkp20_repo_packages SET signature = '".$signature."', signature_sha256 = '".$signature256."' WHERE id=".$row['id']."; ";
 				
 				}
 

@@ -102,7 +102,13 @@ function signhash(){
 	$pkeyid = openssl_pkey_get_private($strKey);
 	
 	// compute signature
-	openssl_sign($strHash, $signature, $pkeyid, "sha1WithRSAEncryption");
+	if(strlen($strHash) > 60){
+		//SHA256
+		openssl_sign($strHash, $signature, $pkeyid, "sha256WithRSAEncryption");
+	} else {
+		//legacy
+		openssl_sign($strHash, $signature, $pkeyid, "sha1WithRSAEncryption");
+	}
 	
 	// free the key from memory
 	openssl_free_key($pkeyid);
@@ -517,7 +523,7 @@ fieldset.settings dt span {
 						</dl>
 						<dl>
 							<dt>
-								<label>SHA1-Hash</label><br /><span>The SHA1-Hash displayed by the Repository</span>
+								<label>SHA-Hash</label><br /><span>The SHA1 or SHA256-Hash displayed by the Repository</span>
 							</dt>
 							<dd><input type="text" name="hash" style="width: 94%" value="<?php echo $hash; ?>"></dd>
 						</dl>
@@ -537,7 +543,7 @@ fieldset.settings dt span {
 			</div>
 		</div>
 		<div id="footer">
-			EQDKP Plus Package Signer © 2014 - <?php echo date('Y', time()); ?> by GodMod
+			EQDKP Plus Package Signer © 2020 - <?php echo date('Y', time()); ?> by GodMod
 		</div>
 		</form>
 
